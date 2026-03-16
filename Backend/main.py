@@ -14,6 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+from rouge_score import rouge_scorer
 
 # ============================================================
 # CONFIG
@@ -317,6 +318,7 @@ def get_news():
             multi.append(structured)
         else:
             single.extend(c)
+        
 
     return {
         "multi_source_articles": multi,
