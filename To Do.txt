@@ -1,5 +1,0 @@
-1) Goal: Make fetching production-grade.
-2) Goal: Make cross-publisher detection academically strong.
-3) Goal: Remove all boilerplate noise.
-4) Goal: Upgrade summarization to research-grade.
-5) Goal: Make it publishable.

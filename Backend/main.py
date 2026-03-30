@@ -28,6 +28,7 @@ RSS_FEEDS = [
     "https://www.theguardian.com/world/rss",
     "https://rss.nytimes.com/services/xml/rss/nyt/World.xml",
     "http://rss.cnn.com/rss/edition_world.rss"
+    "https://www.thehindu.com/news/national/tamil-nadu"
 ]
 
 FETCH_TIMEOUT = 20
