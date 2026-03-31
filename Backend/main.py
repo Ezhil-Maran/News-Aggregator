@@ -27,8 +27,8 @@ RSS_FEEDS = [
     "https://www.aljazeera.com/xml/rss/all.xml",
     "https://www.theguardian.com/world/rss",
     "https://rss.nytimes.com/services/xml/rss/nyt/World.xml",
-    "http://rss.cnn.com/rss/edition_world.rss"
-    "https://www.thehindu.com/news/national/tamil-nadu"
+    "http://rss.cnn.com/rss/edition_world.rss",
+    "https://www.thehindu.com/news/national/feeder/default.rss"
 ]
 
 FETCH_TIMEOUT = 20
@@ -136,7 +136,7 @@ def clean_text(text: str) -> str:
     text = re.sub(r"<.*?>", "", text)
     text = re.sub(r"http\S+", "", text)
     text = re.sub(r"\s+", " ", text)
-    return text.strip().lower()
+    return text.strip()
 
 # ============================================================
 # FETCHING
