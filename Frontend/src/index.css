@@ -1,0 +1,87 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+}
+
+.navbar {
+    background: #1e293b;
+    color: white;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    padding: 20px 40px;
+}
+
+.nav-links {
+    display: flex;
+    gap: 20px;
+}
+
+.nav-links a {
+    color: white;
+    text-decoration: none;
+}
+
+.hero {
+    text-align: center;
+    padding: 100px 20px;
+}
+
+.hero h1 {
+    font-size: 3rem;
+    margin-bottom: 20px;
+}
+
+.hero p {
+    max-width: 700px;
+    margin: auto;
+    line-height: 1.6;
+    margin-bottom: 30px;
+}
+
+.hero button {
+    padding: 12px 24px;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.auth-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    height: 80vh;
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+
+    width: 400px;
+
+    background: white;
+    padding: 30px;
+
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.auth-form input {
+    padding: 12px;
+    font-size: 16px;
+}
+
+.auth-form button {
+    padding: 12px;
+    cursor: pointer;
+}
