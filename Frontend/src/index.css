@@ -1,65 +1,33 @@
+@import "tailwindcss";
+
+/* Global Reset */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
+html {
+    scroll-behavior: smooth;
+}
+
 body {
     font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
-}
-
-.navbar {
-    background: #1e293b;
+    background-color: #020617;
     color: white;
-
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    padding: 20px 40px;
+    overflow-x: hidden;
 }
 
-.nav-links {
-    display: flex;
-    gap: 20px;
-}
-
-.nav-links a {
-    color: white;
-    text-decoration: none;
-}
-
-.hero {
-    text-align: center;
-    padding: 100px 20px;
-}
-
-.hero h1 {
-    font-size: 3rem;
-    margin-bottom: 20px;
-}
-
-.hero p {
-    max-width: 700px;
-    margin: auto;
-    line-height: 1.6;
-    margin-bottom: 30px;
-}
-
-.hero button {
-    padding: 12px 24px;
-    border: none;
-    cursor: pointer;
-    font-size: 16px;
-}
+/* ========================= */
+/* Authentication Pages Only */
+/* ========================= */
 
 .auth-container {
     display: flex;
     justify-content: center;
     align-items: center;
-
-    height: 80vh;
+    min-height: calc(100vh - 80px);
+    padding: 2rem;
 }
 
 .auth-form {
@@ -67,21 +35,55 @@ body {
     flex-direction: column;
     gap: 15px;
 
-    width: 400px;
+    width: 100%;
+    max-width: 420px;
 
     background: white;
+    color: black;
+
     padding: 30px;
 
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    border-radius: 16px;
+
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
+}
+
+.auth-form h2 {
+    text-align: center;
+    margin-bottom: 10px;
 }
 
 .auth-form input {
     padding: 12px;
     font-size: 16px;
+
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+
+    outline: none;
+}
+
+.auth-form input:focus {
+    border-color: #2563eb;
 }
 
 .auth-form button {
     padding: 12px;
+
+    border: none;
+    border-radius: 8px;
+
     cursor: pointer;
+
+    background: #2563eb;
+    color: white;
+
+    font-size: 16px;
+    font-weight: 600;
+
+    transition: 0.3s;
+}
+
+.auth-form button:hover {
+    background: #1d4ed8;
 }
