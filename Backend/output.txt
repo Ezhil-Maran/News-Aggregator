@@ -1,0 +1,6 @@
+`torch_dtype` is deprecated! Use `dtype` instead!
+Loading Qwen...
+
+Loading model: Qwen/Qwen3-4B
+
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]
