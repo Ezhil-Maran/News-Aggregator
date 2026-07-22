@@ -2,6 +2,7 @@
 qwen_loader.py
 
 Loads the Qwen model and tokenizer.
+
 The model is loaded only once when the backend starts.
 """
 
@@ -27,7 +28,6 @@ from app.api.models.model_config import (
 tokenizer = None
 model = None
 
-
 # ============================================================
 # LOAD MODEL
 # ============================================================
@@ -42,14 +42,16 @@ def load_model():
 
     try:
 
+        print("\n========== QWEN INITIALIZATION ==========\n")
+
         if PRINT_MODEL_LOADING:
-            print(f"\nLoading model: {MODEL_PATH}")
+            print(f"Model: {MODEL_PATH}")
 
         print("Loading tokenizer...")
 
         tokenizer = AutoTokenizer.from_pretrained(
             MODEL_PATH,
-            trust_remote_code=True
+            trust_remote_code=True,
         )
 
         if tokenizer.pad_token is None:
@@ -57,7 +59,19 @@ def load_model():
 
         print("Tokenizer loaded successfully.")
 
-        print(f"Using device: {DEVICE}")
+        print(f"Using device : {DEVICE}")
+
+        if DEVICE == "cuda":
+            print(f"GPU          : {torch.cuda.get_device_name(0)}")
+
+            total_vram = (
+                torch.cuda.get_device_properties(0).total_memory
+                / (1024 ** 3)
+            )
+
+            print(f"VRAM         : {total_vram:.2f} GB")
+
+        print()
 
         # ----------------------------------------------------
         # GPU
@@ -74,14 +88,14 @@ def load_model():
                 bnb_4bit_use_double_quant=True,
             )
 
-            print("Loading model...")
+            print("Loading Qwen model...")
 
             model = AutoModelForCausalLM.from_pretrained(
                 MODEL_PATH,
                 quantization_config=quantization_config,
                 device_map="auto",
+                torch_dtype=torch.float16,
                 trust_remote_code=True,
-                dtype=torch.float16,
             )
 
         # ----------------------------------------------------
@@ -94,15 +108,16 @@ def load_model():
 
             model = AutoModelForCausalLM.from_pretrained(
                 MODEL_PATH,
+                torch_dtype=torch.float32,
                 trust_remote_code=True,
-                dtype=torch.float32,
             )
 
             model.to(DEVICE)
 
         model.eval()
 
-        print("Model loaded successfully!")
+        print("\nQwen initialized successfully.")
+        print("\n=========================================\n")
 
         return tokenizer, model
 

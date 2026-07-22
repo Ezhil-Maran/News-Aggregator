@@ -1,7 +1,11 @@
-from app.api.models.qwen_loader import load_model
+from app.services.inference import generate_text
 
-print("Loading Qwen...")
+prompt = """
+Explain Artificial Intelligence in one paragraph.
+"""
 
-tokenizer, model = load_model()
+response = generate_text(prompt)
 
-print("\nEverything loaded successfully!")
+print("\n================ RESPONSE ================\n")
+
+print(response)
