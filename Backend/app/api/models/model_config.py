@@ -14,7 +14,7 @@ import torch
 # ============================================================
 
 # Hugging Face model repository
-MODEL_NAME = "Qwen/Qwen3-4B-Instruct"
+MODEL_NAME = "Qwen/Qwen3-4B"
 
 # Change this later if you fine-tune the model.
 MODEL_PATH = MODEL_NAME
@@ -29,16 +29,24 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 # GENERATION PARAMETERS
 # ============================================================
 
-MAX_NEW_TOKENS = 1024
+# Maximum number of tokens the model can generate.
+# This is sufficient for a professional news article.
+MAX_NEW_TOKENS = 768
 
-TEMPERATURE = 0.3
+# Lower temperature reduces creativity and hallucinations.
+# Ideal for factual news generation.
+TEMPERATURE = 0.1
 
-TOP_P = 0.9
+# Consider the full probability distribution.
+TOP_P = 1.0
 
+# Kept for future experimentation.
 TOP_K = 50
 
-DO_SAMPLE = True
+# Disable sampling for deterministic, reproducible outputs.
+DO_SAMPLE = False
 
+# Discourages repetitive wording.
 REPETITION_PENALTY = 1.1
 
 # ============================================================

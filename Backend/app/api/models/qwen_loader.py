@@ -94,7 +94,7 @@ def load_model():
                 MODEL_PATH,
                 quantization_config=quantization_config,
                 device_map="auto",
-                torch_dtype=torch.float16,
+                dtype=torch.float16,
                 trust_remote_code=True,
             )
 

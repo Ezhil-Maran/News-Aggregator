@@ -2,23 +2,18 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.config.logging_config import logger
+from app.api.database.database import init_db
 
-from app.api.database.database import (
-    init_db,
-    save_articles_bulk,
-    get_all_articles,
-)
-
-from app.services.news_fetcher import fetch_all_feeds
-from app.services.clustering import cluster_articles
-from app.services.article_generator import build_structured_article
-
+from app.services.pipeline import run_pipeline
+from app.api.models.qwen_loader import load_model
 
 # ============================================================
 # APP
 # ============================================================
 
-app = FastAPI(title="Unified News Backend - Stable Research Version")
+app = FastAPI(
+    title="Unified News Backend - Stable Research Version"
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -37,11 +32,11 @@ async def startup():
 
     init_db()
 
-    articles = await fetch_all_feeds()
+    logger.info("Loading Qwen model...")
 
-    save_articles_bulk(articles)
+    load_model()
 
-    logger.info("Startup complete.")
+    logger.info("Backend initialized.")
 
 
 # ============================================================
@@ -49,26 +44,6 @@ async def startup():
 # ============================================================
 
 @app.get("/news")
-def get_news():
+async def get_news():
 
-    articles = get_all_articles()[:80]
-
-    clusters = cluster_articles(articles)
-
-    multi = []
-    single = []
-
-    for cluster in clusters:
-
-        structured = build_structured_article(cluster)
-
-        if structured:
-            multi.append(structured)
-
-        else:
-            single.extend(cluster)
-
-    return {
-        "multi_source_articles": multi,
-        "single_source_articles": single,
-    }
+    return await run_pipeline()

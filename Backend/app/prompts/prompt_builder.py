@@ -1,15 +1,10 @@
 """
 prompt_builder.py
 
-Builds a structured prompt for the language model from a cluster
-of related news articles.
+Builds the user prompt from a cluster of related news articles.
 
-This module is responsible only for prompt construction.
-It does NOT perform inference or interact with the model.
-
-Public API
-----------
-build_news_prompt(cluster: List[Dict]) -> str
+This module ONLY formats the news reports.
+The AI behaviour is defined in system_prompt.py.
 """
 
 from typing import Dict, List
@@ -21,29 +16,29 @@ from typing import Dict, List
 
 def _build_header() -> str:
     """
-    Returns the introductory section of the prompt.
+    Builds the introduction shown before the articles.
     """
 
     return (
-        "Below are multiple news reports describing the same event.\n\n"
+        "The following news reports describe the same event.\n\n"
         "Each report may contain overlapping or unique information.\n"
-        "Read every article carefully before generating the final article.\n\n"
+        "Carefully read every report before writing the final article.\n\n"
     )
 
 
 # ============================================================
-# ARTICLE FORMATTER
+# SINGLE ARTICLE
 # ============================================================
 
 def _build_article(article: Dict, index: int) -> str:
     """
-    Formats a single article for the prompt.
-
-    Missing fields are replaced with sensible defaults.
+    Formats a single article.
     """
 
     title = article.get("title", "Unknown Title")
+
     source = article.get("domain", "Unknown Source")
+
     published = article.get("published", "Unknown Date")
 
     content = (
@@ -54,70 +49,46 @@ def _build_article(article: Dict, index: int) -> str:
     )
 
     return (
-        f"{'=' * 60}\n"
-        f"Article {index}\n"
-        f"{'=' * 60}\n\n"
+        f"{'=' * 70}\n"
+        f"REPORT {index}\n"
+        f"{'=' * 70}\n\n"
         f"Title:\n"
         f"{title}\n\n"
         f"Source:\n"
         f"{source}\n\n"
         f"Published:\n"
         f"{published}\n\n"
-        f"Content:\n"
+        f"Report:\n"
         f"{content}\n\n"
     )
 
 
 # ============================================================
-# INSTRUCTIONS
+# FOOTER
 # ============================================================
 
-def _build_instructions() -> str:
+def _build_footer() -> str:
     """
-    Returns the final instructions for the model.
+    Final reminder for the model.
     """
 
     return (
-        "\n"
-        + "=" * 60
+        "=" * 70
         + "\n"
-        "TASK\n"
-        + "=" * 60
+        "END OF REPORTS\n"
+        + "=" * 70
         + "\n\n"
-        "Construct ONE professional news article using all the reports above.\n\n"
-        "Requirements:\n\n"
-        "- Preserve factual accuracy.\n"
-        "- Never invent information.\n"
-        "- Remove duplicate information.\n"
-        "- Merge overlapping facts naturally.\n"
-        "- Maintain a neutral journalistic tone.\n"
-        "- Preserve important names, places and dates.\n"
-        "- Present information in a logical order.\n"
-        "- Do not mention that multiple reports were provided.\n"
-        "- Do not produce bullet points.\n"
-        "- Create an engaging headline.\n"
-        "- Write a complete article with an introduction, body and conclusion.\n\n"
-        "Return ONLY the final news article."
+        "Generate ONE professional news article using ONLY the information contained in the reports above."
     )
 
 
 # ============================================================
-# PUBLIC FUNCTION
+# PUBLIC API
 # ============================================================
 
 def build_news_prompt(cluster: List[Dict]) -> str:
     """
-    Builds a complete prompt from a cluster of related articles.
-
-    Parameters
-    ----------
-    cluster : List[Dict]
-        List of related news articles.
-
-    Returns
-    -------
-    str
-        Prompt ready to be sent to the LLM.
+    Builds the complete user prompt.
     """
 
     sections = [_build_header()]
@@ -125,6 +96,6 @@ def build_news_prompt(cluster: List[Dict]) -> str:
     for index, article in enumerate(cluster, start=1):
         sections.append(_build_article(article, index))
 
-    sections.append(_build_instructions())
+    sections.append(_build_footer())
 
     return "\n".join(sections)

@@ -1,48 +1,42 @@
 """
 inference.py
 
-Provides interfaces for generating text and news articles using Qwen.
+Provides a simple interface for generating text using Qwen.
 
 All interactions with the LLM should go through this module.
 """
 
-from typing import Dict, List
-
 import torch
 
-from app.api.models.model_config import (
-    DO_SAMPLE,
-    MAX_NEW_TOKENS,
-    REPETITION_PENALTY,
-    TEMPERATURE,
-    TOP_K,
-    TOP_P,
-)
 from app.api.models.qwen_loader import load_model
-from app.prompts.prompt_builder import build_news_prompt
+
+from app.api.models.model_config import (
+    MAX_NEW_TOKENS,
+    TEMPERATURE,
+    TOP_P,
+    TOP_K,
+    DO_SAMPLE,
+    REPETITION_PENALTY,
+)
+
 from app.prompts.system_prompt import SYSTEM_PROMPT
 
 
 # ============================================================
-# LOW-LEVEL TEXT GENERATION
+# GENERATE TEXT
 # ============================================================
 
-def generate_text(prompt: str) -> str:
-    """
-    Generates text from a user prompt.
+def generate_text(user_prompt: str) -> str:
 
-    Parameters
-    ----------
-    prompt : str
-        User prompt.
+    print("\n========== STEP 5 ==========")
+    print("Entered generate_text()")
+    print("============================\n")
 
-    Returns
-    -------
-    str
-        Model-generated response.
-    """
+    print("STEP 6: Calling load_model()...")
 
     tokenizer, model = load_model()
+
+    print("STEP 7: Model loaded successfully.")
 
     messages = [
         {
@@ -51,23 +45,36 @@ def generate_text(prompt: str) -> str:
         },
         {
             "role": "user",
-            "content": prompt,
+            "content": user_prompt,
         },
     ]
 
-    inputs = tokenizer.apply_chat_template(
+    print("STEP 8: Applying chat template...")
+
+    text = tokenizer.apply_chat_template(
         messages,
-        tokenize=True,
+        tokenize=False,
         add_generation_prompt=True,
+    )
+
+    print("STEP 9: Tokenizing prompt...")
+
+    inputs = tokenizer(
+        text,
         return_tensors="pt",
     )
 
-    inputs = inputs.to(model.device)
+    inputs = {
+        key: value.to(model.device)
+        for key, value in inputs.items()
+    }
 
-    with torch.inference_mode():
+    print("STEP 10: Starting model.generate()...")
+
+    with torch.no_grad():
 
         outputs = model.generate(
-            inputs,
+            **inputs,
             max_new_tokens=MAX_NEW_TOKENS,
             temperature=TEMPERATURE,
             top_p=TOP_P,
@@ -77,36 +84,15 @@ def generate_text(prompt: str) -> str:
             pad_token_id=tokenizer.eos_token_id,
         )
 
-    generated_tokens = outputs[0][inputs.shape[-1]:]
+    print("STEP 11: Generation complete.")
 
     generated_text = tokenizer.decode(
-        generated_tokens,
+        outputs[0],
         skip_special_tokens=True,
     )
 
-    return generated_text.strip()
+    generated_text = generated_text[len(text):].strip()
 
+    print("STEP 12: Response decoded.\n")
 
-# ============================================================
-# HIGH-LEVEL NEWS ARTICLE GENERATION
-# ============================================================
-
-def generate_article(cluster: List[Dict]) -> str:
-    """
-    Generates a single consolidated news article from a cluster
-    of related news articles.
-
-    Parameters
-    ----------
-    cluster : List[Dict]
-        Cluster of related articles.
-
-    Returns
-    -------
-    str
-        AI-generated news article.
-    """
-
-    prompt = build_news_prompt(cluster)
-
-    return generate_text(prompt)
+    return generated_text
