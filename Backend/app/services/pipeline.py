@@ -2,25 +2,17 @@
 pipeline.py
 
 Coordinates the complete AI news generation pipeline.
-
-Pipeline
-
-Fetch Articles
-        ↓
-Cluster Articles
-        ↓
-Generate AI Articles
-        ↓
-Return Structured Response
 """
 
+from datetime import datetime, timezone
+import time
 from typing import Dict
+
+from app.api.config.logging_config import logger
 
 from app.services.news_fetcher import fetch_all_feeds
 from app.services.clustering import cluster_articles
 from app.services.article_generator import generate_article
-
-from app.api.config.logging_config import logger
 
 
 # ============================================================
@@ -29,82 +21,126 @@ from app.api.config.logging_config import logger
 
 async def run_pipeline() -> Dict:
     """
-    Executes the complete news generation pipeline.
+    Executes the complete AI news generation pipeline.
     """
 
-    logger.info("=" * 60)
-    logger.info("Starting news generation pipeline...")
-    logger.info("=" * 60)
+    start_time = time.perf_counter()
 
-    # --------------------------------------------------------
-    # Fetch latest news
-    # --------------------------------------------------------
+    logger.info("=" * 70)
+    logger.info("Starting AI News Generation Pipeline")
+    logger.info("=" * 70)
 
-    logger.info("STEP 1: Fetching latest RSS articles...")
+    try:
 
-    articles = await fetch_all_feeds()
+        # ----------------------------------------------------
+        # Fetch RSS Articles
+        # ----------------------------------------------------
 
-    logger.info(f"STEP 1 COMPLETE: {len(articles)} articles fetched.")
+        logger.info("Fetching RSS feeds...")
 
-    # --------------------------------------------------------
-    # Cluster related articles
-    # --------------------------------------------------------
-
-    logger.info("STEP 2: Clustering articles...")
-
-    clusters = cluster_articles(articles)
-
-    logger.info(f"STEP 2 COMPLETE: {len(clusters)} clusters created.")
-
-    # --------------------------------------------------------
-    # Generate AI articles
-    # --------------------------------------------------------
-
-    logger.info("STEP 3: Generating AI articles...")
-
-    generated_articles = []
-
-    single_source_articles = []
-
-    for index, cluster in enumerate(clusters, start=1):
+        articles = await fetch_all_feeds()
 
         logger.info(
-            f"STEP 3.{index}: Processing cluster containing {len(cluster)} article(s)."
+            f"Fetched {len(articles)} unique articles."
         )
 
-        if len(cluster) > 1:
+        # ----------------------------------------------------
+        # Cluster Articles
+        # ----------------------------------------------------
 
-            generated_articles.append(
-                generate_article(cluster)
-            )
+        logger.info("Clustering related articles...")
 
-            logger.info(
-                f"STEP 3.{index}: AI article generated successfully."
-            )
+        clusters = cluster_articles(articles)
 
-        else:
+        logger.info(
+            f"Generated {len(clusters)} clusters."
+        )
 
-            single_source_articles.extend(cluster)
+        # ----------------------------------------------------
+        # Generate AI Articles
+        # ----------------------------------------------------
 
-            logger.info(
-                f"STEP 3.{index}: Single-source article skipped."
-            )
+        generated_articles = []
 
-    logger.info(
-        f"Generated {len(generated_articles)} AI article(s)."
-    )
+        single_source_articles = []
 
-    logger.info("=" * 60)
-    logger.info("Pipeline completed successfully.")
-    logger.info("=" * 60)
+        logger.info("Generating AI articles...")
 
-    return {
-        "generated_articles": generated_articles,
-        "single_source_articles": single_source_articles,
-        "statistics": {
-            "total_articles": len(articles),
-            "clusters": len(clusters),
-            "generated_articles": len(generated_articles),
-            "single_source_articles": len(single_source_articles),
-        },
-    }
+        for cluster in clusters:
+
+            if len(cluster) > 1:
+
+                generated_articles.append(
+                    generate_article(cluster)
+                )
+
+            else:
+
+                single_source_articles.extend(cluster)
+
+        processing_time = round(
+            time.perf_counter() - start_time,
+            2,
+        )
+
+        logger.info(
+            f"Generated {len(generated_articles)} AI article(s)."
+        )
+
+        logger.info(
+            f"Pipeline completed in {processing_time} seconds."
+        )
+
+        logger.info("=" * 70)
+
+        return {
+
+            "success": True,
+
+            "generated_at": datetime.now(
+                timezone.utc
+            ).isoformat(),
+
+            "processing_time_seconds": processing_time,
+
+            "statistics": {
+
+                "total_articles": len(articles),
+
+                "clusters": len(clusters),
+
+                "generated_articles": len(generated_articles),
+
+                "single_source_articles": len(single_source_articles),
+
+            },
+
+            "generated_articles": generated_articles,
+
+            "single_source_articles": single_source_articles,
+
+        }
+
+    except Exception as e:
+
+        logger.exception(
+            "Pipeline execution failed."
+        )
+
+        return {
+
+            "success": False,
+
+            "generated_at": datetime.now(
+                timezone.utc
+            ).isoformat(),
+
+            "error": str(e),
+
+            "generated_articles": [],
+
+            "single_source_articles": [],
+
+            "statistics": {},
+
+        }
