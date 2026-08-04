@@ -30,29 +30,26 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 # ============================================================
 
 # Maximum number of tokens the model can generate.
-# This is sufficient for a professional news article.
+# 768 tokens are sufficient for a complete professional news article.
 MAX_NEW_TOKENS = 768
 
-# Lower temperature reduces creativity and hallucinations.
-# Ideal for factual news generation.
-TEMPERATURE = 0.1
-
-# Consider the full probability distribution.
-TOP_P = 1.0
-
-# Kept for future experimentation.
-TOP_K = 50
-
-# Disable sampling for deterministic, reproducible outputs.
+# Greedy decoding produces deterministic and repeatable articles.
+# This is preferred for factual news generation.
 DO_SAMPLE = False
 
-# Discourages repetitive wording.
+# These parameters are only used when sampling is enabled.
+# They are kept here for future experimentation.
+TEMPERATURE = 0.1
+TOP_P = 1.0
+
+# Helps reduce repetitive wording.
 REPETITION_PENALTY = 1.1
 
 # ============================================================
 # CONTEXT
 # ============================================================
 
+# Maximum prompt length accepted by the model.
 MAX_INPUT_LENGTH = 4096
 
 # ============================================================

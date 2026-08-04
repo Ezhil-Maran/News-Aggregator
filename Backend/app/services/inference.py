@@ -1,9 +1,9 @@
 """
 inference.py
 
-Provides a simple interface for generating text using Qwen.
+Provides a centralized interface for generating text using Qwen.
 
-All interactions with the LLM should go through this module.
+All interactions with the language model should go through this module.
 """
 
 import torch
@@ -14,7 +14,6 @@ from app.api.models.model_config import (
     MAX_NEW_TOKENS,
     TEMPERATURE,
     TOP_P,
-    TOP_K,
     DO_SAMPLE,
     REPETITION_PENALTY,
 )
@@ -27,16 +26,11 @@ from app.prompts.system_prompt import SYSTEM_PROMPT
 # ============================================================
 
 def generate_text(user_prompt: str) -> str:
-
-    print("\n========== STEP 5 ==========")
-    print("Entered generate_text()")
-    print("============================\n")
-
-    print("STEP 6: Calling load_model()...")
+    """
+    Generates text using the loaded Qwen model.
+    """
 
     tokenizer, model = load_model()
-
-    print("STEP 7: Model loaded successfully.")
 
     messages = [
         {
@@ -49,18 +43,14 @@ def generate_text(user_prompt: str) -> str:
         },
     ]
 
-    print("STEP 8: Applying chat template...")
-
-    text = tokenizer.apply_chat_template(
+    prompt = tokenizer.apply_chat_template(
         messages,
         tokenize=False,
         add_generation_prompt=True,
     )
 
-    print("STEP 9: Tokenizing prompt...")
-
     inputs = tokenizer(
-        text,
+        prompt,
         return_tensors="pt",
     )
 
@@ -69,30 +59,42 @@ def generate_text(user_prompt: str) -> str:
         for key, value in inputs.items()
     }
 
-    print("STEP 10: Starting model.generate()...")
+    # --------------------------------------------------------
+    # Generation configuration
+    # --------------------------------------------------------
+
+    generation_kwargs = {
+        "max_new_tokens": MAX_NEW_TOKENS,
+        "do_sample": DO_SAMPLE,
+        "repetition_penalty": REPETITION_PENALTY,
+        "pad_token_id": tokenizer.eos_token_id,
+        "eos_token_id": tokenizer.eos_token_id,
+    }
+
+    # Sampling parameters are only used when sampling is enabled.
+    if DO_SAMPLE:
+
+        generation_kwargs.update({
+            "temperature": TEMPERATURE,
+            "top_p": TOP_P,
+        })
+
+    # --------------------------------------------------------
+    # Generate
+    # --------------------------------------------------------
 
     with torch.no_grad():
 
         outputs = model.generate(
             **inputs,
-            max_new_tokens=MAX_NEW_TOKENS,
-            temperature=TEMPERATURE,
-            top_p=TOP_P,
-            top_k=TOP_K,
-            do_sample=DO_SAMPLE,
-            repetition_penalty=REPETITION_PENALTY,
-            pad_token_id=tokenizer.eos_token_id,
+            **generation_kwargs,
         )
 
-    print("STEP 11: Generation complete.")
+    generated_tokens = outputs[0][inputs["input_ids"].shape[1]:]
 
     generated_text = tokenizer.decode(
-        outputs[0],
+        generated_tokens,
         skip_special_tokens=True,
     )
 
-    generated_text = generated_text[len(text):].strip()
-
-    print("STEP 12: Response decoded.\n")
-
-    return generated_text
+    return generated_text.strip()
