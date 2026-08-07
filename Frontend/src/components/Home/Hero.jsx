@@ -1,4 +1,34 @@
+import { useEffect, useState } from "react";
+import { fetchNews } from "../../services/api";
+
 const Hero = () => {
+  const [article, setArticle] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    async function loadNews() {
+      try {
+        const data = await fetchNews();
+
+        if (
+          data.generated_articles &&
+          data.generated_articles.length > 0
+        ) {
+          setArticle(data.generated_articles[0]);
+        } else {
+          setError("No AI-generated articles available.");
+        }
+      } catch (err) {
+        setError("Unable to load AI summary.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadNews();
+  }, []);
+
   return (
     <section className="relative min-h-screen bg-slate-950 overflow-hidden">
 
@@ -28,7 +58,7 @@ const Hero = () => {
           <p className="mt-8 text-slate-300 text-lg leading-8">
 
             Aggregate articles from multiple trusted sources,
-            generate AI-powered summaries using Ollama,
+            generate AI-powered summaries using Qwen,
             compare viewpoints, and stay informed without information overload.
 
           </p>
@@ -57,36 +87,67 @@ const Hero = () => {
               Live AI Summary
             </h3>
 
-            <div className="space-y-5">
-
-              <div className="rounded-xl bg-slate-800 p-4">
-
-                <h4 className="font-semibold mb-2">
-                  📰 Technology
-                </h4>
-
-                <p className="text-slate-400 text-sm">
-                  AI summarizes breaking technology news
-                  collected from multiple publishers into
-                  concise, unbiased insights.
+            {loading && (
+              <div className="rounded-xl bg-slate-800 p-5">
+                <p className="text-blue-400 font-semibold">
+                  Generating today's news...
                 </p>
 
-              </div>
-
-              <div className="rounded-xl bg-slate-800 p-4">
-
-                <h4 className="font-semibold mb-2">
-                  ⚡ FastAPI + Ollama
-                </h4>
-
-                <p className="text-slate-400 text-sm">
-                  Lightning-fast backend powered by FastAPI
-                  with local AI inference using Ollama.
+                <p className="mt-3 text-slate-400 text-sm">
+                  Fetching RSS feeds, clustering related articles,
+                  and generating an AI summary...
                 </p>
+              </div>
+            )}
+
+            {!loading && error && (
+              <div className="rounded-xl bg-red-900/30 border border-red-500/30 p-5">
+                <p className="text-red-400 font-semibold">
+                  {error}
+                </p>
+              </div>
+            )}
+
+            {!loading && article && (
+              <div className="space-y-5">
+
+                <div className="rounded-xl bg-slate-800 p-5">
+
+                  <h4 className="font-semibold text-lg text-white">
+                    {article.headline}
+                  </h4>
+
+                  <p className="mt-4 text-slate-400 text-sm leading-7">
+                    {article.content.length > 280
+                      ? article.content.substring(0, 280) + "..."
+                      : article.content}
+                  </p>
+
+                </div>
+
+                <div className="rounded-xl bg-slate-800 p-5">
+
+                  <h4 className="font-semibold mb-3">
+                    Sources
+                  </h4>
+
+                  <div className="flex flex-wrap gap-2">
+
+                    {article.sources.map((source) => (
+                      <span
+                        key={source}
+                        className="px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 text-xs"
+                      >
+                        {source}
+                      </span>
+                    ))}
+
+                  </div>
+
+                </div>
 
               </div>
-
-            </div>
+            )}
 
           </div>
 
