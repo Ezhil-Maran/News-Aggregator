@@ -9,7 +9,7 @@ from typing import Dict
 
 
 # ============================================================
-# HELPERS
+# TEXT CLEANING
 # ============================================================
 
 def _clean_text(text: str) -> str:
@@ -22,10 +22,10 @@ def _clean_text(text: str) -> str:
 
     text = text.replace("\r\n", "\n").replace("\r", "\n")
 
-    # Remove markdown headings
-    text = re.sub(r"^#+\s*", "", text, flags=re.MULTILINE)
+    # Remove markdown heading markers
+    text = re.sub(r"^\s*#{1,6}\s*", "", text, flags=re.MULTILINE)
 
-    # Collapse repeated spaces
+    # Remove excessive spaces/tabs
     text = re.sub(r"[ \t]+", " ", text)
 
     # Collapse excessive blank lines
@@ -34,9 +34,13 @@ def _clean_text(text: str) -> str:
     return text.strip()
 
 
+# ============================================================
+# HEADLINE VALIDATION
+# ============================================================
+
 def _is_invalid_headline(headline: str) -> bool:
     """
-    Detects reasoning instead of a real headline.
+    Detects reasoning or invalid text instead of a real headline.
     """
 
     if not headline:
@@ -60,63 +64,125 @@ def _is_invalid_headline(headline: str) -> bool:
     return headline.startswith(invalid_prefixes)
 
 
+# ============================================================
+# EXTRACT HEADLINE
+# ============================================================
+
 def _extract_headline(response: str) -> str:
     """
     Extracts the headline from the model response.
+
+    Supports both:
+
+        Headline:
+        <headline>
+
+    and cases where the model simply starts with:
+
+        <headline>
+        <article>
     """
 
-    patterns = [
+    # --------------------------------------------------------
+    # Preferred format:
+    #
+    # Headline:
+    # <headline>
+    # --------------------------------------------------------
 
-        r"Headline\s*:\s*(.+)",
+    match = re.search(
+        r"^\s*Headline\s*:\s*(.+?)\s*$",
+        response,
+        flags=re.IGNORECASE | re.MULTILINE,
+    )
 
-        r"^Headline\s*\n+(.+)",
+    if match:
+        return match.group(1).strip()
 
-        r"^#\s*(.+)",
+    # --------------------------------------------------------
+    # Markdown format:
+    #
+    # # <headline>
+    # --------------------------------------------------------
 
-        r"^##\s*(.+)",
+    match = re.search(
+        r"^\s*#{1,2}\s+(.+?)\s*$",
+        response,
+        flags=re.MULTILINE,
+    )
+
+    if match:
+        return match.group(1).strip()
+
+    # --------------------------------------------------------
+    # If the model does not provide a label, use the first
+    # non-empty line as the headline.
+    # --------------------------------------------------------
+
+    lines = [
+        line.strip()
+        for line in response.split("\n")
+        if line.strip()
     ]
 
-    for pattern in patterns:
+    if lines:
+        first_line = lines[0]
 
-        match = re.search(
-            pattern,
-            response,
-            flags=re.IGNORECASE | re.MULTILINE,
-        )
-
-        if match:
-
-            return match.group(1).strip()
+        if not first_line.lower().startswith("article:"):
+            return first_line
 
     return ""
 
 
+# ============================================================
+# EXTRACT ARTICLE
+# ============================================================
+
 def _extract_article(response: str) -> str:
     """
     Extracts the article body.
+
+    Supports:
+
+        Article:
+        <article>
+
+    and unlabeled responses where the first line is the headline.
     """
 
-    patterns = [
+    # --------------------------------------------------------
+    # Preferred format:
+    #
+    # Article:
+    # <article>
+    # --------------------------------------------------------
 
-        r"Article\s*:\s*(.*)",
+    match = re.search(
+        r"^\s*Article\s*:\s*(.*)$",
+        response,
+        flags=re.IGNORECASE | re.MULTILINE | re.DOTALL,
+    )
 
-        r"^Article\s*\n+(.*)",
+    if match:
+        return match.group(1).strip()
 
+    # --------------------------------------------------------
+    # Unlabeled response:
+    #
+    # First line = headline
+    # Remaining text = article
+    # --------------------------------------------------------
+
+    lines = [
+        line.strip()
+        for line in response.split("\n")
+        if line.strip()
     ]
 
-    for pattern in patterns:
+    if len(lines) > 1:
+        return "\n\n".join(lines[1:])
 
-        match = re.search(
-            pattern,
-            response,
-            flags=re.IGNORECASE | re.DOTALL | re.MULTILINE,
-        )
-
-        if match:
-
-            return match.group(1).strip()
-
-    return response
+    return ""
 
 
 # ============================================================
@@ -131,7 +197,6 @@ def parse_response(response: str) -> Dict:
     response = _clean_text(response)
 
     headline = _extract_headline(response)
-
     article = _extract_article(response)
 
     headline = _clean_text(headline).strip("\"'")

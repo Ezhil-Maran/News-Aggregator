@@ -116,6 +116,8 @@ def load_model():
 
         model.eval()
 
+        print(f"Device map: {getattr(model, 'hf_device_map', 'Not available')}")
+
         print("\nQwen initialized successfully.")
         print("\n=========================================\n")
 

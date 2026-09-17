@@ -3,9 +3,10 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.config.logging_config import logger
 from app.api.database.database import init_db
-
-from app.services.pipeline import run_pipeline
 from app.api.models.qwen_loader import load_model
+
+from app.api.routes.news import router as news_router
+
 
 # ============================================================
 # APP
@@ -15,12 +16,24 @@ app = FastAPI(
     title="Unified News Backend - Stable Research Version"
 )
 
+
+# ============================================================
+# CORS
+# ============================================================
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# ============================================================
+# ROUTERS
+# ============================================================
+
+app.include_router(news_router)
 
 
 # ============================================================
@@ -37,13 +50,3 @@ async def startup():
     load_model()
 
     logger.info("Backend initialized.")
-
-
-# ============================================================
-# ROUTES
-# ============================================================
-
-@app.get("/news")
-async def get_news():
-
-    return await run_pipeline()
