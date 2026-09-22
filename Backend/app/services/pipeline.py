@@ -13,6 +13,11 @@ from app.api.config.logging_config import logger
 from app.services.news_fetcher import fetch_all_feeds
 from app.services.clustering import cluster_articles
 from app.services.article_generator import generate_article
+from app.api.database.database import (
+    save_articles_bulk,
+    create_pipeline_run,
+    save_generated_articles,
+)
 
 
 # ============================================================
@@ -25,6 +30,7 @@ async def run_pipeline() -> Dict:
     """
 
     pipeline_start = time.perf_counter()
+    generated_at = datetime.now(timezone.utc).isoformat()
 
     logger.info("=" * 70)
     logger.info("Starting AI News Generation Pipeline")
@@ -121,6 +127,11 @@ async def run_pipeline() -> Dict:
         # TOTAL TIME
         # ----------------------------------------------------
 
+        single_source_links = {
+            article["link"]
+            for article in single_source_articles
+        }
+        
         processing_time = round(
             time.perf_counter() - pipeline_start,
             2,
@@ -136,15 +147,34 @@ async def run_pipeline() -> Dict:
             f"{processing_time}s"
         )
 
+        run_id = create_pipeline_run(
+            generated_at=generated_at,
+            processing_time_seconds=processing_time,
+            total_articles=len(articles),
+            clusters=len(clusters),
+            generated_articles=len(generated_articles),
+            single_source_articles=len(single_source_articles),
+            success=True,
+        )
+
+        save_articles_bulk(
+            articles,
+            run_id,
+            single_source_links
+        )
+
+        save_generated_articles(    
+            run_id,
+            generated_articles
+        )
+
         logger.info("=" * 70)
 
         return {
 
             "success": True,
 
-            "generated_at": datetime.now(
-                timezone.utc
-            ).isoformat(),
+            "generated_at": generated_at,
 
             "processing_time_seconds": processing_time,
 
@@ -181,9 +211,7 @@ async def run_pipeline() -> Dict:
 
             "success": False,
 
-            "generated_at": datetime.now(
-                timezone.utc
-            ).isoformat(),
+            "generated_at": generated_at,
 
             "processing_time_seconds": processing_time,
 
