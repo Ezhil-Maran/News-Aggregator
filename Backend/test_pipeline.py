@@ -8,7 +8,7 @@ import asyncio
 
 from app.services.pipeline import run_pipeline
 
-
+#configured test-pipeline to use the sample cluster from datasets/sample_cluster.py
 async def main():
 
     print("\n" + "=" * 80)
